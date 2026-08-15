@@ -1,29 +1,56 @@
 from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
-
-from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal
 
-from typing import Generic, TypeVar
-
-T = TypeVar("T")
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class EmployeeCreate(BaseModel):
-    employee_code: str = Field(min_length=1, max_length=50)
-    first_name: str = Field(min_length=1, max_length=100)
-    last_name: str = Field(min_length=1, max_length=100)
-    email: str = Field(max_length=255)
-    phone: str | None = Field(default=None, max_length=20)
-    department: str = Field(min_length=1, max_length=100)
-    designation: str = Field(min_length=1, max_length=100)
-    salary: Decimal = Field(gt=0, max_digits=12, decimal_places=2)
+    employee_code: str = Field(
+        min_length=1,
+        max_length=50,
+    )
+
+    first_name: str = Field(
+        min_length=1,
+        max_length=100,
+    )
+
+    last_name: str = Field(
+        min_length=1,
+        max_length=100,
+    )
+
+    email: str = Field(
+        max_length=255,
+    )
+
+    phone: str | None = Field(
+        default=None,
+        max_length=20,
+    )
+
+    department_id: UUID
+
+    designation: str = Field(
+        min_length=1,
+        max_length=100,
+    )
+
+    salary: Decimal = Field(
+        gt=0,
+        max_digits=12,
+        decimal_places=2,
+    )
+
     joining_date: date
 
 
 class EmployeeResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
     id: UUID
     employee_code: str
@@ -31,7 +58,9 @@ class EmployeeResponse(BaseModel):
     last_name: str
     email: str
     phone: str | None
-    department: str
+
+    department_id: UUID
+
     designation: str
     salary: Decimal
     joining_date: date
@@ -41,8 +70,16 @@ class EmployeeResponse(BaseModel):
 
 
 class EmployeeListQuery(BaseModel):
-    page: int = Field(default=1, ge=1)
-    page_size: int = Field(default=20, ge=1, le=100)
+    page: int = Field(
+        default=1,
+        ge=1,
+    )
+
+    page_size: int = Field(
+        default=20,
+        ge=1,
+        le=100,
+    )
 
     search: str | None = Field(
         default=None,
@@ -50,10 +87,7 @@ class EmployeeListQuery(BaseModel):
         max_length=100,
     )
 
-    department: str | None = Field(
-        default=None,
-        max_length=100,
-    )
+    department_id: UUID | None = None
 
     is_active: bool | None = None
 
@@ -65,7 +99,10 @@ class EmployeeListQuery(BaseModel):
         "employee_code",
     ] = "created_at"
 
-    sort_order: Literal["asc", "desc"] = "desc"
+    sort_order: Literal[
+        "asc",
+        "desc",
+    ] = "desc"
 
 
 class PaginationMetadata(BaseModel):
@@ -109,10 +146,7 @@ class EmployeeUpdate(BaseModel):
         max_length=20,
     )
 
-    department: str | None = Field(
-        default=None,
-        max_length=100,
-    )
+    department_id: UUID | None = None
 
     designation: str | None = Field(
         default=None,

@@ -1,5 +1,6 @@
 from uuid import UUID
-from sqlalchemy import select, func
+
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.modules.employees.model import Employee
@@ -9,6 +10,10 @@ class EmployeeRepository:
 
     def __init__(self, db: Session):
         self.db = db
+
+    # ---------------------------------------------------------
+    # GET BY ID
+    # ---------------------------------------------------------
 
     def get_by_id(
         self,
@@ -21,6 +26,10 @@ class EmployeeRepository:
 
         return self.db.scalar(statement)
 
+    # ---------------------------------------------------------
+    # GET BY EMAIL
+    # ---------------------------------------------------------
+
     def get_by_email(
         self,
         email: str,
@@ -31,6 +40,10 @@ class EmployeeRepository:
         )
 
         return self.db.scalar(statement)
+
+    # ---------------------------------------------------------
+    # GET BY EMPLOYEE CODE
+    # ---------------------------------------------------------
 
     def get_by_employee_code(
         self,
@@ -43,6 +56,10 @@ class EmployeeRepository:
 
         return self.db.scalar(statement)
 
+    # ---------------------------------------------------------
+    # CREATE
+    # ---------------------------------------------------------
+
     def create(
         self,
         employee: Employee,
@@ -53,21 +70,27 @@ class EmployeeRepository:
 
         return employee
 
+    # ---------------------------------------------------------
+    # LIST
+    # ---------------------------------------------------------
+
     def list(
-    self,
-    *,
-    offset: int,
-    limit: int,
-    search: str | None = None,
-    department: str | None = None,
-    is_active: bool | None = None,
-    sort_by: str = "created_at",
-    sort_order: str = "desc",
+        self,
+        *,
+        offset: int,
+        limit: int,
+        search: str | None = None,
+        department_id: UUID | None = None,
+        is_active: bool | None = None,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
     ) -> tuple[list[Employee], int]:
 
         statement = select(Employee)
 
+        # Search
         if search:
+
             search_pattern = f"%{search}%"
 
             statement = statement.where(
@@ -77,36 +100,55 @@ class EmployeeRepository:
                 | Employee.employee_code.ilike(search_pattern)
             )
 
-        if department:
+        # Department filter
+        if department_id:
+
             statement = statement.where(
-                Employee.department == department
+                Employee.department_id == department_id
             )
 
+        # Active filter
         if is_active is not None:
+
             statement = statement.where(
                 Employee.is_active == is_active
             )
 
-        sort_column = getattr(Employee, sort_by)
+        # Sorting
+        sort_column = getattr(
+            Employee,
+            sort_by,
+        )
 
         if sort_order == "asc":
+
             statement = statement.order_by(
                 sort_column.asc()
             )
+
         else:
+
             statement = statement.order_by(
                 sort_column.desc()
             )
 
+        # Total count
         count_statement = select(
             func.count()
         ).select_from(
             statement.subquery()
         )
 
-        total = self.db.scalar(count_statement) or 0
+        total = self.db.scalar(
+            count_statement
+        ) or 0
 
-        statement = statement.offset(offset).limit(limit)
+        # Pagination
+        statement = statement.offset(
+            offset
+        ).limit(
+            limit
+        )
 
         employees = list(
             self.db.scalars(statement).all()
@@ -114,17 +156,24 @@ class EmployeeRepository:
 
         return employees, total
 
+    # ---------------------------------------------------------
+    # UPDATE
+    # ---------------------------------------------------------
 
     def update(
-    self,
-    employee: Employee,
-    values: dict,
+        self,
+        employee: Employee,
+        values: dict,
     ) -> Employee:
 
         for field, value in values.items():
-            setattr(employee, field, value)
+
+            setattr(
+                employee,
+                field,
+                value,
+            )
 
         self.db.flush()
 
         return employee
-    

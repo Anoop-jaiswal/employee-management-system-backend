@@ -9,8 +9,9 @@ from app.core.exceptions import (
     ResourceNotFoundException,
 )
 
-from app.modules.employees.router import router as employee_router
 from app.modules.departments.router import router as department_router
+from app.modules.employees.router import router as employee_router
+
 
 app = FastAPI(
     title="Employee Management System",
@@ -27,16 +28,17 @@ app.add_exception_handler(
     duplicate_resource_handler,
 )
 
-app.include_router(
-    employee_router,
-    prefix="/api/v1",
-)
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
 
 app.include_router(
     department_router,
     prefix="/api/v1",
 )
 
-@app.get("/health")
-def health_check():
-    return {"status": "ok"}
+app.include_router(
+    employee_router,
+    prefix="/api/v1",
+)
+

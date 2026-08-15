@@ -1,18 +1,23 @@
+import math
 from uuid import UUID
+
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import DuplicateResourceException
-from app.core.exceptions import ResourceNotFoundException
+from app.core.exceptions import (
+    DuplicateResourceException,
+    ResourceNotFoundException,
+)
+
 from app.modules.employees.model import Employee
 from app.modules.employees.repository import EmployeeRepository
-from app.modules.employees.schema import EmployeeCreate, EmployeeUpdate
-import math
-
 from app.modules.employees.schema import (
+    EmployeeCreate,
     EmployeeListQuery,
+    EmployeeUpdate,
     PaginationMetadata,
 )
+
 
 class EmployeeService:
 
@@ -20,11 +25,16 @@ class EmployeeService:
         self.db = db
         self.repository = EmployeeRepository(db)
 
+    # ---------------------------------------------------------
+    # CREATE EMPLOYEE
+    # ---------------------------------------------------------
+
     def create_employee(
         self,
         data: EmployeeCreate,
     ) -> Employee:
 
+        # Check duplicate email
         existing_email = self.repository.get_by_email(
             data.email
         )
@@ -34,10 +44,9 @@ class EmployeeService:
                 "Employee with this email already exists"
             )
 
-        existing_code = (
-            self.repository.get_by_employee_code(
-                data.employee_code
-            )
+        # Check duplicate employee code
+        existing_code = self.repository.get_by_employee_code(
+            data.employee_code
         )
 
         if existing_code:
@@ -51,7 +60,7 @@ class EmployeeService:
             last_name=data.last_name,
             email=data.email,
             phone=data.phone,
-            department=data.department,
+            department_id=data.department_id,
             designation=data.designation,
             salary=data.salary,
             joining_date=data.joining_date,
@@ -59,11 +68,13 @@ class EmployeeService:
 
         try:
             self.repository.create(employee)
+
             self.db.commit()
             self.db.refresh(employee)
 
         except IntegrityError:
             self.db.rollback()
+
             raise DuplicateResourceException(
                 "Employee with this email or employee code already exists"
             )
@@ -74,9 +85,13 @@ class EmployeeService:
 
         return employee
 
+    # ---------------------------------------------------------
+    # GET EMPLOYEE BY ID
+    # ---------------------------------------------------------
+
     def get_employee(
-    self,
-    employee_id: UUID,
+        self,
+        employee_id: UUID,
     ) -> Employee:
 
         employee = self.repository.get_by_id(
@@ -90,10 +105,13 @@ class EmployeeService:
 
         return employee
 
+    # ---------------------------------------------------------
+    # LIST EMPLOYEES
+    # ---------------------------------------------------------
 
     def list_employees(
-    self,
-    query: EmployeeListQuery,
+        self,
+        query: EmployeeListQuery,
     ):
         offset = (
             query.page - 1
@@ -103,31 +121,37 @@ class EmployeeService:
             offset=offset,
             limit=query.page_size,
             search=query.search,
-            department=query.department,
+            department_id=query.department_id,
             is_active=query.is_active,
             sort_by=query.sort_by,
             sort_order=query.sort_order,
         )
 
         total_pages = (
-            math.ceil(total / query.page_size)
+            math.ceil(
+                total / query.page_size
+            )
             if total > 0
             else 0
         )
 
-        return employees, PaginationMetadata(
+        pagination = PaginationMetadata(
             page=query.page,
             page_size=query.page_size,
             total=total,
             total_pages=total_pages,
         )
 
+        return employees, pagination
 
+    # ---------------------------------------------------------
+    # UPDATE EMPLOYEE
+    # ---------------------------------------------------------
 
     def update_employee(
-    self,
-    employee_id: UUID,
-    data: EmployeeUpdate,
+        self,
+        employee_id: UUID,
+        data: EmployeeUpdate,
     ) -> Employee:
 
         employee = self.repository.get_by_id(
@@ -143,10 +167,16 @@ class EmployeeService:
             exclude_unset=True
         )
 
+        # Nothing to update
         if not values:
             return employee
 
+        # -----------------------------------------------------
+        # Check duplicate email
+        # -----------------------------------------------------
+
         if "email" in values:
+
             existing = self.repository.get_by_email(
                 values["email"]
             )
@@ -159,7 +189,12 @@ class EmployeeService:
                     "Employee with this email already exists"
                 )
 
+        # -----------------------------------------------------
+        # Check duplicate employee code
+        # -----------------------------------------------------
+
         if "employee_code" in values:
+
             existing = (
                 self.repository.get_by_employee_code(
                     values["employee_code"]
@@ -174,7 +209,12 @@ class EmployeeService:
                     "Employee code already exists"
                 )
 
+        # -----------------------------------------------------
+        # Update employee
+        # -----------------------------------------------------
+
         try:
+
             self.repository.update(
                 employee,
                 values,
@@ -184,6 +224,7 @@ class EmployeeService:
             self.db.refresh(employee)
 
         except IntegrityError:
+
             self.db.rollback()
 
             raise DuplicateResourceException(
@@ -191,6 +232,7 @@ class EmployeeService:
             )
 
         except Exception:
+
             self.db.rollback()
             raise
 
