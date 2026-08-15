@@ -1,26 +1,23 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-
 from sqlalchemy.orm import Session
 
 from app.dependencies.database import get_db
-
 from app.modules.departments.schema import (
     DepartmentCreate,
     DepartmentResponse,
     DepartmentUpdate,
 )
-
 from app.modules.departments.service import (
     DepartmentService,
 )
-
 
 router = APIRouter(
     prefix="/departments",
     tags=["Departments"],
 )
+
 
 @router.post(
     "",
@@ -34,6 +31,7 @@ def create_department(
     service = DepartmentService(db)
 
     return service.create(data)
+
 
 @router.patch(
     "/{department_id}",
@@ -51,6 +49,7 @@ def update_department(
         data,
     )
 
+
 @router.get(
     "/{department_id}",
     response_model=DepartmentResponse,
@@ -61,6 +60,4 @@ def get_department(
 ):
     service = DepartmentService(db)
 
-    return service.get_by_id(
-        department_id
-    )
+    return service.get_by_id(department_id)

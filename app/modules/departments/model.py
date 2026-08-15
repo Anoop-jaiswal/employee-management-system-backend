@@ -11,6 +11,7 @@ from app.core.database import Base
 if TYPE_CHECKING:
     from app.modules.employees.model import Employee
 
+
 class Department(Base):
     __tablename__ = "departments"
 
@@ -54,6 +55,4 @@ class Department(Base):
         onupdate=func.now(),
     )
 
-    employees: Mapped[list["Employee"]] = relationship(
-        back_populates="department"
-    )
+    employees: Mapped[list["Employee"]] = relationship(back_populates="department")

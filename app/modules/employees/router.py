@@ -26,6 +26,7 @@ router = APIRouter(
 # CREATE EMPLOYEE
 # ---------------------------------------------------------
 
+
 @router.post(
     "",
     response_model=EmployeeResponse,
@@ -44,6 +45,7 @@ def create_employee(
 # GET EMPLOYEE
 # ---------------------------------------------------------
 
+
 @router.get(
     "/{employee_id}",
     response_model=EmployeeResponse,
@@ -54,14 +56,13 @@ def get_employee(
 ):
     service = EmployeeService(db)
 
-    return service.get_employee(
-        employee_id
-    )
+    return service.get_employee(employee_id)
 
 
 # ---------------------------------------------------------
 # LIST EMPLOYEES
 # ---------------------------------------------------------
+
 
 @router.get(
     "",
@@ -73,9 +74,7 @@ def list_employees(
 ):
     service = EmployeeService(db)
 
-    employees, pagination = service.list_employees(
-        query
-    )
+    employees, pagination = service.list_employees(query)
 
     return EmployeeListResponse(
         items=employees,
@@ -86,6 +85,7 @@ def list_employees(
 # ---------------------------------------------------------
 # UPDATE EMPLOYEE
 # ---------------------------------------------------------
+
 
 @router.patch(
     "/{employee_id}",

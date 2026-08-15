@@ -28,9 +28,11 @@ app.add_exception_handler(
     duplicate_resource_handler,
 )
 
+
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
 
 app.include_router(
     department_router,
@@ -41,4 +43,3 @@ app.include_router(
     employee_router,
     prefix="/api/v1",
 )
-

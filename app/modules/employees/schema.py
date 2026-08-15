@@ -48,9 +48,7 @@ class EmployeeCreate(BaseModel):
 
 
 class EmployeeResponse(BaseModel):
-    model_config = ConfigDict(
-        from_attributes=True
-    )
+    model_config = ConfigDict(from_attributes=True)
 
     id: UUID
     employee_code: str

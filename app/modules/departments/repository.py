@@ -13,9 +13,7 @@ class DepartmentRepository:
         department_id: UUID,
     ) -> Department | None:
 
-        statement = select(Department).where(
-            Department.id == department_id
-        )
+        statement = select(Department).where(Department.id == department_id)
 
         return self.db.scalar(statement)
 
@@ -24,9 +22,7 @@ class DepartmentRepository:
         code: str,
     ) -> Department | None:
 
-        statement = select(Department).where(
-            Department.code == code
-        )
+        statement = select(Department).where(Department.code == code)
 
         return self.db.scalar(statement)
 

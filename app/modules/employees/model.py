@@ -90,6 +90,4 @@ class Employee(Base):
         onupdate=func.now(),
     )
 
-    department: Mapped["Department"] = relationship(
-        back_populates="employees"
-    )
+    department: Mapped["Department"] = relationship(back_populates="employees")

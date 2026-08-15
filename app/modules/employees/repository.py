@@ -7,7 +7,6 @@ from app.modules.employees.model import Employee
 
 
 class EmployeeRepository:
-
     def __init__(self, db: Session):
         self.db = db
 
@@ -20,9 +19,7 @@ class EmployeeRepository:
         employee_id: UUID,
     ) -> Employee | None:
 
-        statement = select(Employee).where(
-            Employee.id == employee_id
-        )
+        statement = select(Employee).where(Employee.id == employee_id)
 
         return self.db.scalar(statement)
 
@@ -35,9 +32,7 @@ class EmployeeRepository:
         email: str,
     ) -> Employee | None:
 
-        statement = select(Employee).where(
-            Employee.email == email
-        )
+        statement = select(Employee).where(Employee.email == email)
 
         return self.db.scalar(statement)
 
@@ -50,9 +45,7 @@ class EmployeeRepository:
         employee_code: str,
     ) -> Employee | None:
 
-        statement = select(Employee).where(
-            Employee.employee_code == employee_code
-        )
+        statement = select(Employee).where(Employee.employee_code == employee_code)
 
         return self.db.scalar(statement)
 
@@ -90,7 +83,6 @@ class EmployeeRepository:
 
         # Search
         if search:
-
             search_pattern = f"%{search}%"
 
             statement = statement.where(
@@ -102,17 +94,11 @@ class EmployeeRepository:
 
         # Department filter
         if department_id:
-
-            statement = statement.where(
-                Employee.department_id == department_id
-            )
+            statement = statement.where(Employee.department_id == department_id)
 
         # Active filter
         if is_active is not None:
-
-            statement = statement.where(
-                Employee.is_active == is_active
-            )
+            statement = statement.where(Employee.is_active == is_active)
 
         # Sorting
         sort_column = getattr(
@@ -121,38 +107,20 @@ class EmployeeRepository:
         )
 
         if sort_order == "asc":
-
-            statement = statement.order_by(
-                sort_column.asc()
-            )
+            statement = statement.order_by(sort_column.asc())
 
         else:
-
-            statement = statement.order_by(
-                sort_column.desc()
-            )
+            statement = statement.order_by(sort_column.desc())
 
         # Total count
-        count_statement = select(
-            func.count()
-        ).select_from(
-            statement.subquery()
-        )
+        count_statement = select(func.count()).select_from(statement.subquery())
 
-        total = self.db.scalar(
-            count_statement
-        ) or 0
+        total = self.db.scalar(count_statement) or 0
 
         # Pagination
-        statement = statement.offset(
-            offset
-        ).limit(
-            limit
-        )
+        statement = statement.offset(offset).limit(limit)
 
-        employees = list(
-            self.db.scalars(statement).all()
-        )
+        employees = list(self.db.scalars(statement).all())
 
         return employees, total
 
@@ -167,7 +135,6 @@ class EmployeeRepository:
     ) -> Employee:
 
         for field, value in values.items():
-
             setattr(
                 employee,
                 field,

@@ -20,7 +20,6 @@ from app.modules.employees.schema import (
 
 
 class EmployeeService:
-
     def __init__(self, db: Session):
         self.db = db
         self.repository = EmployeeRepository(db)
@@ -35,24 +34,16 @@ class EmployeeService:
     ) -> Employee:
 
         # Check duplicate email
-        existing_email = self.repository.get_by_email(
-            data.email
-        )
+        existing_email = self.repository.get_by_email(data.email)
 
         if existing_email:
-            raise DuplicateResourceException(
-                "Employee with this email already exists"
-            )
+            raise DuplicateResourceException("Employee with this email already exists")
 
         # Check duplicate employee code
-        existing_code = self.repository.get_by_employee_code(
-            data.employee_code
-        )
+        existing_code = self.repository.get_by_employee_code(data.employee_code)
 
         if existing_code:
-            raise DuplicateResourceException(
-                "Employee code already exists"
-            )
+            raise DuplicateResourceException("Employee code already exists")
 
         employee = Employee(
             employee_code=data.employee_code,
@@ -94,14 +85,10 @@ class EmployeeService:
         employee_id: UUID,
     ) -> Employee:
 
-        employee = self.repository.get_by_id(
-            employee_id
-        )
+        employee = self.repository.get_by_id(employee_id)
 
         if employee is None:
-            raise ResourceNotFoundException(
-                "Employee not found"
-            )
+            raise ResourceNotFoundException("Employee not found")
 
         return employee
 
@@ -113,9 +100,7 @@ class EmployeeService:
         self,
         query: EmployeeListQuery,
     ):
-        offset = (
-            query.page - 1
-        ) * query.page_size
+        offset = (query.page - 1) * query.page_size
 
         employees, total = self.repository.list(
             offset=offset,
@@ -127,13 +112,7 @@ class EmployeeService:
             sort_order=query.sort_order,
         )
 
-        total_pages = (
-            math.ceil(
-                total / query.page_size
-            )
-            if total > 0
-            else 0
-        )
+        total_pages = math.ceil(total / query.page_size) if total > 0 else 0
 
         pagination = PaginationMetadata(
             page=query.page,
@@ -154,18 +133,12 @@ class EmployeeService:
         data: EmployeeUpdate,
     ) -> Employee:
 
-        employee = self.repository.get_by_id(
-            employee_id
-        )
+        employee = self.repository.get_by_id(employee_id)
 
         if employee is None:
-            raise ResourceNotFoundException(
-                "Employee not found"
-            )
+            raise ResourceNotFoundException("Employee not found")
 
-        values = data.model_dump(
-            exclude_unset=True
-        )
+        values = data.model_dump(exclude_unset=True)
 
         # Nothing to update
         if not values:
@@ -176,15 +149,9 @@ class EmployeeService:
         # -----------------------------------------------------
 
         if "email" in values:
+            existing = self.repository.get_by_email(values["email"])
 
-            existing = self.repository.get_by_email(
-                values["email"]
-            )
-
-            if (
-                existing is not None
-                and existing.id != employee.id
-            ):
+            if existing is not None and existing.id != employee.id:
                 raise DuplicateResourceException(
                     "Employee with this email already exists"
                 )
@@ -194,27 +161,16 @@ class EmployeeService:
         # -----------------------------------------------------
 
         if "employee_code" in values:
+            existing = self.repository.get_by_employee_code(values["employee_code"])
 
-            existing = (
-                self.repository.get_by_employee_code(
-                    values["employee_code"]
-                )
-            )
-
-            if (
-                existing is not None
-                and existing.id != employee.id
-            ):
-                raise DuplicateResourceException(
-                    "Employee code already exists"
-                )
+            if existing is not None and existing.id != employee.id:
+                raise DuplicateResourceException("Employee code already exists")
 
         # -----------------------------------------------------
         # Update employee
         # -----------------------------------------------------
 
         try:
-
             self.repository.update(
                 employee,
                 values,
@@ -224,7 +180,6 @@ class EmployeeService:
             self.db.refresh(employee)
 
         except IntegrityError:
-
             self.db.rollback()
 
             raise DuplicateResourceException(
@@ -232,7 +187,6 @@ class EmployeeService:
             )
 
         except Exception:
-
             self.db.rollback()
             raise
 
