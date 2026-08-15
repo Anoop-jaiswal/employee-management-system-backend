@@ -7,11 +7,8 @@ from app.core.exceptions import (
     DuplicateResourceException,
     ResourceNotFoundException,
 )
-
 from app.modules.departments.model import Department
-from app.modules.departments.repository import (
-    DepartmentRepository,
-)
+from app.modules.departments.repository import DepartmentRepository
 from app.modules.departments.schema import (
     DepartmentCreate,
     DepartmentUpdate,
@@ -27,11 +24,15 @@ class DepartmentService:
         self,
         department_id: UUID,
     ) -> Department:
-
         department = self.repository.get_by_id(department_id)
 
         if department is None:
-            raise ResourceNotFoundException("Department not found")
+            raise ResourceNotFoundException(
+                message="Department not found",
+                details={
+                    "department_id": str(department_id),
+                },
+            )
 
         return department
 
@@ -39,11 +40,15 @@ class DepartmentService:
         self,
         data: DepartmentCreate,
     ) -> Department:
-
         existing = self.repository.get_by_code(data.code)
 
         if existing:
-            raise DuplicateResourceException("Department code already exists")
+            raise DuplicateResourceException(
+                message="Department code already exists",
+                details={
+                    "code": data.code,
+                },
+            )
 
         department = Department(
             name=data.name,
@@ -57,10 +62,15 @@ class DepartmentService:
             self.db.commit()
             self.db.refresh(department)
 
-        except IntegrityError:
+        except IntegrityError as exc:
             self.db.rollback()
 
-            raise DuplicateResourceException("Department code already exists")
+            raise DuplicateResourceException(
+                message="Department code already exists",
+                details={
+                    "code": data.code,
+                },
+            ) from exc
 
         except Exception:
             self.db.rollback()
@@ -73,11 +83,7 @@ class DepartmentService:
         department_id: UUID,
         data: DepartmentUpdate,
     ) -> Department:
-
-        department = self.repository.get_by_id(department_id)
-
-        if department is None:
-            raise ResourceNotFoundException("Department not found")
+        department = self.get_by_id(department_id)
 
         values = data.model_dump(exclude_unset=True)
 
@@ -88,7 +94,12 @@ class DepartmentService:
             existing = self.repository.get_by_code(values["code"])
 
             if existing and existing.id != department.id:
-                raise DuplicateResourceException("Department code already exists")
+                raise DuplicateResourceException(
+                    message="Department code already exists",
+                    details={
+                        "code": values["code"],
+                    },
+                )
 
         try:
             self.repository.update(
@@ -99,10 +110,15 @@ class DepartmentService:
             self.db.commit()
             self.db.refresh(department)
 
-        except IntegrityError:
+        except IntegrityError as exc:
             self.db.rollback()
 
-            raise DuplicateResourceException("Department code already exists")
+            raise DuplicateResourceException(
+                message="Department code already exists",
+                details={
+                    "code": values.get("code"),
+                },
+            ) from exc
 
         except Exception:
             self.db.rollback()

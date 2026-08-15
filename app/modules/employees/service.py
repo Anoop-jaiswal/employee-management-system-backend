@@ -8,7 +8,6 @@ from app.core.exceptions import (
     DuplicateResourceException,
     ResourceNotFoundException,
 )
-
 from app.modules.employees.model import Employee
 from app.modules.employees.repository import EmployeeRepository
 from app.modules.employees.schema import (
@@ -24,26 +23,48 @@ class EmployeeService:
         self.db = db
         self.repository = EmployeeRepository(db)
 
-    # ---------------------------------------------------------
+    # =========================================================
     # CREATE EMPLOYEE
-    # ---------------------------------------------------------
+    # =========================================================
 
     def create_employee(
         self,
         data: EmployeeCreate,
     ) -> Employee:
 
+        # -----------------------------------------------------
         # Check duplicate email
+        # -----------------------------------------------------
+
         existing_email = self.repository.get_by_email(data.email)
 
         if existing_email:
-            raise DuplicateResourceException("Employee with this email already exists")
+            raise DuplicateResourceException(
+                message="Employee with this email already exists",
+                details={
+                    "field": "email",
+                    "value": data.email,
+                },
+            )
 
+        # -----------------------------------------------------
         # Check duplicate employee code
+        # -----------------------------------------------------
+
         existing_code = self.repository.get_by_employee_code(data.employee_code)
 
         if existing_code:
-            raise DuplicateResourceException("Employee code already exists")
+            raise DuplicateResourceException(
+                message="Employee code already exists",
+                details={
+                    "field": "employee_code",
+                    "value": data.employee_code,
+                },
+            )
+
+        # -----------------------------------------------------
+        # Create employee entity
+        # -----------------------------------------------------
 
         employee = Employee(
             employee_code=data.employee_code,
@@ -63,12 +84,18 @@ class EmployeeService:
             self.db.commit()
             self.db.refresh(employee)
 
-        except IntegrityError:
+        except IntegrityError as exc:
             self.db.rollback()
 
             raise DuplicateResourceException(
-                "Employee with this email or employee code already exists"
-            )
+                message="Employee with this email or employee code already exists",
+                details={
+                    "fields": [
+                        "email",
+                        "employee_code",
+                    ],
+                },
+            ) from exc
 
         except Exception:
             self.db.rollback()
@@ -76,9 +103,9 @@ class EmployeeService:
 
         return employee
 
-    # ---------------------------------------------------------
+    # =========================================================
     # GET EMPLOYEE BY ID
-    # ---------------------------------------------------------
+    # =========================================================
 
     def get_employee(
         self,
@@ -88,18 +115,24 @@ class EmployeeService:
         employee = self.repository.get_by_id(employee_id)
 
         if employee is None:
-            raise ResourceNotFoundException("Employee not found")
+            raise ResourceNotFoundException(
+                message="Employee not found",
+                details={
+                    "employee_id": str(employee_id),
+                },
+            )
 
         return employee
 
-    # ---------------------------------------------------------
+    # =========================================================
     # LIST EMPLOYEES
-    # ---------------------------------------------------------
+    # =========================================================
 
     def list_employees(
         self,
         query: EmployeeListQuery,
-    ):
+    ) -> tuple[list[Employee], PaginationMetadata]:
+
         offset = (query.page - 1) * query.page_size
 
         employees, total = self.repository.list(
@@ -123,9 +156,9 @@ class EmployeeService:
 
         return employees, pagination
 
-    # ---------------------------------------------------------
+    # =========================================================
     # UPDATE EMPLOYEE
-    # ---------------------------------------------------------
+    # =========================================================
 
     def update_employee(
         self,
@@ -133,10 +166,15 @@ class EmployeeService:
         data: EmployeeUpdate,
     ) -> Employee:
 
-        employee = self.repository.get_by_id(employee_id)
+        # -----------------------------------------------------
+        # Get employee
+        # -----------------------------------------------------
 
-        if employee is None:
-            raise ResourceNotFoundException("Employee not found")
+        employee = self.get_employee(employee_id)
+
+        # -----------------------------------------------------
+        # Get only fields supplied by the client
+        # -----------------------------------------------------
 
         values = data.model_dump(exclude_unset=True)
 
@@ -153,7 +191,11 @@ class EmployeeService:
 
             if existing is not None and existing.id != employee.id:
                 raise DuplicateResourceException(
-                    "Employee with this email already exists"
+                    message="Employee with this email already exists",
+                    details={
+                        "field": "email",
+                        "value": values["email"],
+                    },
                 )
 
         # -----------------------------------------------------
@@ -164,7 +206,13 @@ class EmployeeService:
             existing = self.repository.get_by_employee_code(values["employee_code"])
 
             if existing is not None and existing.id != employee.id:
-                raise DuplicateResourceException("Employee code already exists")
+                raise DuplicateResourceException(
+                    message="Employee code already exists",
+                    details={
+                        "field": "employee_code",
+                        "value": values["employee_code"],
+                    },
+                )
 
         # -----------------------------------------------------
         # Update employee
@@ -179,12 +227,18 @@ class EmployeeService:
             self.db.commit()
             self.db.refresh(employee)
 
-        except IntegrityError:
+        except IntegrityError as exc:
             self.db.rollback()
 
             raise DuplicateResourceException(
-                "Employee with this email or employee code already exists"
-            )
+                message="Employee with this email or employee code already exists",
+                details={
+                    "fields": [
+                        "email",
+                        "employee_code",
+                    ],
+                },
+            ) from exc
 
         except Exception:
             self.db.rollback()
