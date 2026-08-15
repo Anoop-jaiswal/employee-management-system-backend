@@ -7,6 +7,7 @@ from alembic import context
 
 from app.core.database import Base
 from app.modules.employees.model import Employee
+from app.modules.departments.model import Department
 
 from app.core.config import settings
 

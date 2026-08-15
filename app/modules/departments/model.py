@@ -1,11 +1,15 @@
 from datetime import datetime
 from uuid import UUID, uuid4
+from typing import TYPE_CHECKING
+from sqlalchemy.orm import relationship
 
 from sqlalchemy import Boolean, DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
 
+if TYPE_CHECKING:
+    from app.modules.employees.model import Employee
 
 class Department(Base):
     __tablename__ = "departments"
@@ -48,4 +52,8 @@ class Department(Base):
         nullable=False,
         server_default=func.now(),
         onupdate=func.now(),
+    )
+
+    employees: Mapped[list["Employee"]] = relationship(
+        back_populates="department"
     )

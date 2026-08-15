@@ -10,6 +10,7 @@ from app.core.exceptions import (
 )
 
 from app.modules.employees.router import router as employee_router
+from app.modules.departments.router import router as department_router
 
 app = FastAPI(
     title="Employee Management System",
@@ -28,6 +29,11 @@ app.add_exception_handler(
 
 app.include_router(
     employee_router,
+    prefix="/api/v1",
+)
+
+app.include_router(
+    department_router,
     prefix="/api/v1",
 )
 

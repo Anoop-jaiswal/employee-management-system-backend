@@ -1,11 +1,17 @@
 from datetime import date, datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 
 from sqlalchemy import Boolean, Date, DateTime, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.modules.departments.model import Department
 
 
 class Employee(Base):
@@ -45,8 +51,8 @@ class Employee(Base):
         nullable=True,
     )
 
-    department: Mapped[str] = mapped_column(
-        String(100),
+    department_id: Mapped[UUID] = mapped_column(
+        ForeignKey("departments.id"),
         nullable=False,
     )
 
@@ -82,4 +88,8 @@ class Employee(Base):
         nullable=False,
         server_default=func.now(),
         onupdate=func.now(),
+    )
+
+    department: Mapped["Department"] = relationship(
+        back_populates="employees"
     )
