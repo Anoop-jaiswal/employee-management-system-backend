@@ -5,3 +5,5 @@ psycopg[binary]
 alembic
 pydantic-settings
 ruff
+pwdlib[argon2]
+pydantic[email]

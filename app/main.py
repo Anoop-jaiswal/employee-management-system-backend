@@ -7,6 +7,7 @@ from app.core.exception_handlers import (
     validation_exception_handler,
 )
 from app.core.exceptions import AppException
+from app.modules.auth.router import router as auth_router
 from app.modules.departments.router import router as department_router
 from app.modules.employees.router import router as employee_router
 
@@ -49,6 +50,11 @@ def health_check():
 # -------------------------------------------------------------------
 # API Routers
 # -------------------------------------------------------------------
+
+app.include_router(
+    auth_router,
+    prefix="/api/v1",
+)
 
 app.include_router(
     department_router,

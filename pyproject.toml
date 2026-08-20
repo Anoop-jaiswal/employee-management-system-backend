@@ -10,7 +10,6 @@ line-ending = "lf"
 [tool.ruff.lint]
 select = [
     "E",
-    "F",
     "I",
 ]
 
