@@ -55,3 +55,16 @@ class DuplicateResourceException(AppException):
             status_code=409,
             details=details,
         )
+
+
+class InvalidCredentialsException(AppException):
+    def __init__(
+        self,
+        message: str = "Invalid email or password",
+        code: str = "INVALID_CREDENTIALS",
+    ):
+        super().__init__(
+            message,
+            code,
+            401,
+        )
