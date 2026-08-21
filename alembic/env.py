@@ -5,6 +5,7 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 from app.core.config import settings
 from app.core.database import Base
+from app.modules.auth.model import RefreshToken
 from app.modules.departments.model import Department
 from app.modules.employees.model import Employee
 from app.modules.users.model import User

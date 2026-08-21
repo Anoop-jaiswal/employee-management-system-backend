@@ -34,6 +34,7 @@ router = APIRouter(
 def create_employee(
     data: EmployeeCreate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     service = EmployeeService(db)
 
@@ -52,6 +53,7 @@ def create_employee(
 def get_employee(
     employee_id: UUID,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     service = EmployeeService(db)
 
@@ -95,6 +97,7 @@ def update_employee(
     employee_id: UUID,
     data: EmployeeUpdate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     service = EmployeeService(db)
 

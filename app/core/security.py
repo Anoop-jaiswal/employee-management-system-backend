@@ -1,3 +1,5 @@
+import hashlib
+import secrets
 from datetime import datetime, timedelta, timezone
 
 import jwt
@@ -40,3 +42,11 @@ def create_access_token(
         settings.JWT_SECRET_KEY,
         algorithm=settings.JWT_ALGORITHM,
     )
+
+
+def create_refresh_token() -> str:
+    return secrets.token_urlsafe(64)
+
+
+def hash_refresh_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
