@@ -28,10 +28,21 @@ class RefreshTokenRepository:
         statement = select(RefreshToken).where(RefreshToken.token_hash == token_hash)
         return self.db.scalar(statement)
 
-    def revoke(
+    def revoke_family(
         self,
-        refresh_token: RefreshToken,
-    ) -> RefreshToken:
-        refresh_token.revoked_at = datetime.now(timezone.utc)
+        family_id: UUID,
+    ) -> None:
+
+        statement = select(RefreshToken).where(
+            RefreshToken.family_id == family_id,
+            RefreshToken.revoked_at.is_(None),
+        )
+
+        tokens = self.db.scalars(statement).all()
+
+        now = datetime.now(timezone.utc)
+
+        for token in tokens:
+            token.revoked_at = now
+
         self.db.flush()
-        return refresh_token

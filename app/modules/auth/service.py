@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -22,6 +23,7 @@ from app.modules.users.model import User
 from app.modules.users.repository import UserRepository
 from app.modules.users.schema import UserCreate
 
+family_id = uuid4()
 
 class AuthService:
     def __init__(self, db: Session):
@@ -100,6 +102,7 @@ class AuthService:
 
         refresh_token_record = RefreshToken(
             user_id=user.id,
+            family_id=family_id,
             token_hash=refresh_token_hash,
             expires_at=(now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)),
         )
@@ -133,6 +136,8 @@ class AuthService:
         now = datetime.now(timezone.utc)
 
         if stored_token.revoked_at is not None:
+            self.refresh_token_repository.revoke_family(stored_token.family_id)
+            self.db.commit()
             raise InvalidCredentialsException()
 
         if stored_token.expires_at <= now:
@@ -153,7 +158,9 @@ class AuthService:
         new_refresh_token_hash = hash_refresh_token(new_refresh_token)
 
         new_refresh_token_record = RefreshToken(
+            id=uuid4(),
             user_id=user.id,
+            family_id=stored_token.family_id,
             token_hash=new_refresh_token_hash,
             expires_at=(now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)),
         )
