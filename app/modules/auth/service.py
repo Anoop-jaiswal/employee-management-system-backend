@@ -175,3 +175,27 @@ class AuthService:
             access_token=new_access_token,
             refresh_token=new_refresh_token,
         )
+
+    def logout(
+        self,
+        data: RefreshTokenRequest,
+    ) -> None:
+
+        token_hash = hash_refresh_token(data.refresh_token)
+
+        stored_token = self.refresh_token_repository.get_by_token_hash(token_hash)
+
+        if stored_token is None:
+            raise InvalidCredentialsException()
+
+        if stored_token.revoked_at is not None:
+            raise InvalidCredentialsException()
+
+        try:
+            self.refresh_token_repository.revoke(stored_token)
+
+            self.db.commit()
+
+        except Exception:
+            self.db.rollback()
+            raise

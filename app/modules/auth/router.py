@@ -53,3 +53,17 @@ def refresh(
     service = AuthService(db)
 
     return service.refresh(data)
+
+
+@router.post("/logout")
+def logout(
+    data: RefreshTokenRequest,
+    db: Session = Depends(get_db),
+):
+    service = AuthService(db)
+
+    service.logout(data)
+
+    return {
+        "message": "Logged out successfully",
+    }

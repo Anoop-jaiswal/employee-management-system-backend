@@ -46,3 +46,14 @@ class RefreshTokenRepository:
             token.revoked_at = now
 
         self.db.flush()
+
+    def revoke(
+        self,
+        refresh_token: RefreshToken,
+    ) -> RefreshToken:
+
+        refresh_token.revoked_at = datetime.now(timezone.utc)
+
+        self.db.flush()
+
+        return refresh_token
