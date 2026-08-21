@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -18,7 +18,12 @@ from app.core.security import (
 )
 from app.modules.auth.model import RefreshToken
 from app.modules.auth.repository import RefreshTokenRepository
-from app.modules.auth.schema import LoginRequest, RefreshTokenRequest, TokenResponse
+from app.modules.auth.schema import (
+    LoginRequest,
+    RefreshTokenRequest,
+    SessionResponse,
+    TokenResponse,
+)
 from app.modules.users.model import User
 from app.modules.users.repository import UserRepository
 from app.modules.users.schema import UserCreate
@@ -193,6 +198,89 @@ class AuthService:
 
         try:
             self.refresh_token_repository.revoke(stored_token)
+
+            self.db.commit()
+
+        except Exception:
+            self.db.rollback()
+            raise
+
+    def get_sessions(
+        self,
+        user_id: UUID,
+    ) -> list[SessionResponse]:
+
+        tokens = self.refresh_token_repository.get_by_user_id(user_id)
+
+        sessions = {}
+
+        for token in tokens:
+            family_id = token.family_id
+
+            if family_id not in sessions:
+                sessions[family_id] = {
+                    "id": family_id,
+                    "created_at": token.created_at,
+                    "last_active_at": token.created_at,
+                    "expires_at": token.expires_at,
+                    "revoked": True,
+                }
+
+            session = sessions[family_id]
+
+            if token.created_at < session["created_at"]:
+                session["created_at"] = token.created_at
+
+            if token.created_at > session["last_active_at"]:
+                session["last_active_at"] = token.created_at
+
+            if token.expires_at > session["expires_at"]:
+                session["expires_at"] = token.expires_at
+
+            if token.revoked_at is None:
+                session["revoked"] = False
+
+        return [
+            SessionResponse(
+                id=session["id"],
+                created_at=session["created_at"],
+                last_active_at=session["last_active_at"],
+                expires_at=session["expires_at"],
+            )
+            for session in sessions.values()
+            if not session["revoked"]
+        ]
+
+    def revoke_session(
+        self,
+        user_id: UUID,
+        family_id: UUID,
+    ) -> None:
+
+        tokens = self.refresh_token_repository.get_by_family_id(
+            user_id=user_id,
+            family_id=family_id,
+        )
+
+        if not tokens:
+            raise InvalidCredentialsException()
+
+        try:
+            self.refresh_token_repository.revoke_family(family_id)
+
+            self.db.commit()
+
+        except Exception:
+            self.db.rollback()
+            raise
+
+    def logout_all(
+        self,
+        user_id: UUID,
+    ) -> None:
+
+        try:
+            self.refresh_token_repository.revoke_all_for_user(user_id)
 
             self.db.commit()
 
