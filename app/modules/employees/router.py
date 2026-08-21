@@ -3,8 +3,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
+from app.dependencies.auth import get_current_user
 from app.dependencies.database import get_db
-
 from app.modules.employees.schema import (
     EmployeeCreate,
     EmployeeListQuery,
@@ -12,9 +12,8 @@ from app.modules.employees.schema import (
     EmployeeResponse,
     EmployeeUpdate,
 )
-
 from app.modules.employees.service import EmployeeService
-
+from app.modules.users.model import User
 
 router = APIRouter(
     prefix="/employees",
@@ -69,6 +68,7 @@ def get_employee(
     response_model=EmployeeListResponse,
 )
 def list_employees(
+    current_user: User = Depends(get_current_user),
     query: EmployeeListQuery = Depends(),
     db: Session = Depends(get_db),
 ):
